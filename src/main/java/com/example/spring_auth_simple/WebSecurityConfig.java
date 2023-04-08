@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configurers.LogoutConf
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -16,31 +18,32 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-	@Bean
-	public SecurityFilterChain securityFilterChain(@NotNull HttpSecurity http) throws Exception {
-		http
-			.authorizeHttpRequests((requests) -> requests
-				.requestMatchers("/", "/home").permitAll()
-				.anyRequest().authenticated()
-			)
-			.formLogin((form) -> form
-				.loginPage("/login")
-				.permitAll()
-			)
-			.logout(LogoutConfigurer::permitAll);
+    @Bean
+    public SecurityFilterChain configure(@NotNull HttpSecurity security) throws Exception {
+        security.authorizeHttpRequests((requests) -> requests
+                .requestMatchers("/", "/home").permitAll()
+                .anyRequest().authenticated()
+        );
+        security.formLogin((form) -> form
+                .loginPage("/login")
+                .permitAll()
+        );
+        security.logout(LogoutConfigurer::permitAll);
 
-		return http.build();
-	}
+        return security.build();
+    }
 
-	@Bean
-	public UserDetailsService userDetailsService() {
-		UserDetails user =
-			 User.withDefaultPasswordEncoder()
-				.username("user")
-				.password("password")
-				.roles("USER")
-				.build();
+    @Bean
+    public UserDetailsService users() {
+        PasswordEncoder encoder = PasswordEncoderFactories.createDelegatingPasswordEncoder();
+        UserDetails user =
+                User.builder()
+                        .passwordEncoder(encoder::encode)
+                        .username("user")
+                        .password("123456")
+                        .roles("USER")
+                        .build();
 
-		return new InMemoryUserDetailsManager(user);
-	}
+        return new InMemoryUserDetailsManager(user);
+    }
 }
